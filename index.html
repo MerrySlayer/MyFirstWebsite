@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Our Wisdom</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="blog-container">
+  <div class="blog-header">
+    <h1 class="title">Our Wisdom</h1>
+    <input type="text" id="searchInput" placeholder="Search posts...">
+  </div>
+  <div class="blog-body" id="blogBody">
+    </div>
+  <div class="new-post" id="newPostContainer">
+    <textarea id="postInput" placeholder="Write your historical story..."></textarea>
+    <button class="post-button" onclick="addPost()">Publish</button>
+  </div>
+  <div class="history">
+    <h2 class="title">History</h2>
+    <ul id="historyList"></ul>
+  </div>
+</div>
+
+<script>
+  const STORAGE_KEY = "ourWisdomBlog";
+
+  function loadPostsFromStorage() {
+    const postsJson = localStorage.getItem(STORAGE_KEY);
+    if (postsJson !== null) {
+      return JSON.parse(postsJson);
+    }
+    return [];
+  }
+
+  function savePostsToStorage(posts) {
+    const postsJson = JSON.stringify(posts);
+    localStorage.setItem(STORAGE_KEY, postsJson);
+  }
+
+  const posts = loadPostsFromStorage(); // Array to store blog posts stored in local storage
+  const history = []; // Array to store past posts
+
+  function addPost() {
+    // Get the input value
+    const postInput = document.getElementById("postInput");
+    const postText = postInput.value;
+
+    if (postText.trim() === "") {
+      return;
+    }
+
+    // Create a new post object
+    const newPost = {
+      content: postText,
+      date: new Date(),
+    };
+
+    // Add the new post to blog posts and history
+    posts.push(newPost);
+    history.push(newPost);
+
+    // Save updated posts to local storage
+    savePostsToStorage(posts);
+
+    // Update the UI with the new post
+    displayPosts();
+
+    // Clear the input field
+    postInput.value = "";
+
+    // Update history list with new post
+    updateHistoryList();
+  }
+
+  function displayPosts(filteredPosts = posts) {
+    // Clear existing posts
+    const blogBody = document.getElementById("blogBody");
+    blogBody.innerHTML = "";
+
+    // Display each filtered post
+    for (const post of filteredPosts) {
+      const newPostElement = document.createElement("div");
+      newPostElement.className = "post";
+
+      const contentElement = document.createElement("p");
+      contentElement.innerText = post.content;
+
+      const dateElement = document.createElement("span");
+      dateElement.innerText = `Published: ${post.date.toLocaleString()}`;
+
+      newPostElement.appendChild(contentElement);
+      newPostElement.appendChild(dateElement);
+      blogBody.appendChild(newPostElement);
+    }
+  }
+
+  function updateHistoryList() {
+    // Clear existing history list
+    const historyList = document.getElementById("historyList");
+    historyList.innerHTML = "";
+
+    // Create and display each history entry
+    for (const post of history) {
+      const newHistoryElement = document.createElement("li");
+      newHistoryElement.innerText = post.content.slice(0, 50) + "...";
+      newHistoryElement.addEventListener("click", () => {
+        // Display selected history post
+        posts.push(post); // Move post back to main blog
+        savePostsToStorage(posts);
+        displayPosts();
+      });
+      historyList.appendChild(newHistoryElement);
+    }
+  }
+
+  const searchInput = document.getElementById("searchInput");
+  searchInput.addEventListener("keyup", () => {
+    const searchTerm = searchInput.value.toLowerCase();
+    const filteredPosts = posts.filter(post => post.content.toLowerCase().includes(searchTerm));
+    displayPosts(filteredPosts);
+  });
+
+  // Initial display
+  displayPosts();
+  updateHistoryList();
+</script>
+
+</body>
